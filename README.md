@@ -15,7 +15,10 @@
 | Multithreading                                                |    ✅     |
 | Binding a proxy to a session                                  |    ✅     |
 | Auto-purchase of items if you have coins (multitap, attempts) |    ✅     |
+| Binding a proxy to a session/query_id                         |    ✅     |
 | Random sleep time between clicks                              |    ✅     |
+
+## [How to add query id](https://github.com/Freddywhest/RockyRabbitBot/blob/main/AddQueryId.md)
 
 ## [Settings](https://github.com/FreddyWhest/ToMarketBot/blob/main/.env-example)
 
@@ -26,6 +29,7 @@
 | **AUTO_CLAIM_DAILY_REWARD** | Whether the bot should claim the daily rewards (True / False)             |
 | **AUTO_FARM**               | Whether the bot should start and claim farming (True / False)             |
 | **SLEEP_BETWEEN_TAP**       | Delay between taps in seconds (eg. 70)                                    |
+| **USE_QUERY_ID**            | Whether to use query ids instead of sessions (True / False)               |
 | **USE_PROXY_FROM_FILE**     | Whether to use proxy from the `bot/config/proxies.js` file (True / False) |
 
 ## Installation
