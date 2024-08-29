@@ -367,7 +367,11 @@ class NonSessionTapper {
         await sleep(3);
 
         // Play game
-        if (profile_data?.data?.play_passes > 0 && settings.AUTO_PLAY_GAME) {
+        while (profile_data?.data?.play_passes > 0 && settings.AUTO_PLAY_GAME) {
+          logger.info(
+            `${this.session_name} | sleeping for 5 seconds before starting game...`
+          );
+          await sleep(5);
           const data = { game_id: this.TOIY_g };
           const start_game_response = await this.api.start_game(
             http_client,
