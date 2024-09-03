@@ -10,15 +10,17 @@ const sleep = require("../utils/sleep");
 const ApiRequest = require("./api");
 const _ = require("lodash");
 const moment = require("moment");
+const path = require("path");
 
 class NonSessionTapper {
   constructor(query_id, query_name) {
+    this.bot_name = "tomarket";
     this.session_name = query_name;
     this.query_id = query_id;
     this.API_URL = app.apiUrl;
     this.session_user_agents = this.#load_session_data();
     this.headers = { ...headers, "user-agent": this.#get_user_agent() };
-    this.api = new ApiRequest(this.session_name);
+    this.api = new ApiRequest(this.session_name, this.bot_name);
     this.MVOH_dly = "fa873d13-d831-4d6f-8aee-9cff7a1d0db1";
     this.JUOY_f = "53b22103-c7ff-413d-bc63-20f6fb806a07";
     this.TOIY_g = "59bcd12e-04e2-404c-a172-311a0084587d";
@@ -26,7 +28,8 @@ class NonSessionTapper {
 
   #load_session_data() {
     try {
-      const data = fs.readFileSync("session_user_agents.json", "utf8");
+      const filePath = path.join(process.cwd(), "session_user_agents.json");
+      const data = fs.readFileSync(filePath, "utf8");
       return JSON.parse(data);
     } catch (error) {
       if (error.code === "ENOENT") {
@@ -47,7 +50,10 @@ class NonSessionTapper {
       return this.session_user_agents[this.session_name];
     }
 
-    logger.info(`${this.session_name} | Generating new user agent...`);
+    logger.info(
+      `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Generating new user agent...`
+    );
+
     const newUserAgent = this.#get_random_user_agent();
     this.session_user_agents[this.session_name] = newUserAgent;
     this.#save_session_data(this.session_user_agents);
@@ -55,10 +61,8 @@ class NonSessionTapper {
   }
 
   #save_session_data(session_user_agents) {
-    fs.writeFileSync(
-      "session_user_agents.json",
-      JSON.stringify(session_user_agents, null, 2)
-    );
+    const filePath = path.join(process.cwd(), "session_user_agents.json");
+    fs.writeFileSync(filePath, JSON.stringify(session_user_agents, null, 2));
   }
 
   #proxy_agent(proxy) {
@@ -73,7 +77,7 @@ class NonSessionTapper {
       return new SocksProxyAgent(proxy_url);
     } catch (e) {
       logger.error(
-        `${
+        `<ye>[${this.bot_name}]</ye> | ${
           this.session_name
         } | Proxy agent error: ${e}\nProxy: ${JSON.stringify(proxy, null, 2)}`
       );
@@ -92,12 +96,14 @@ class NonSessionTapper {
       return jsonData;
     } catch (error) {
       logger.error(
-        `${this.session_name} | ❗️Unknown error during Authorization: ${error}`
+        `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ❗️Unknown error during Authorization: ${error}`
       );
       throw error;
     } finally {
       await sleep(1);
-      logger.info(`${this.session_name} | 🚀 Starting session...`);
+      logger.info(
+        `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 🚀 Starting session...`
+      );
     }
   }
 
@@ -111,7 +117,7 @@ class NonSessionTapper {
       return response.data;
     } catch (error) {
       logger.error(
-        `${this.session_name} | ❗️Unknown error while getting Access Token: ${error}`
+        `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ❗️Unknown error while getting Access Token: ${error}`
       );
       await sleep(3); // 3 seconds delay
     }
@@ -122,7 +128,9 @@ class NonSessionTapper {
       http_client.defaults.headers["host"] = "httpbin.org";
       const response = await http_client.get("https://httpbin.org/ip");
       const ip = response.data.origin;
-      logger.info(`${this.session_name} | Proxy IP: ${ip}`);
+      logger.info(
+        `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Proxy IP: ${ip}`
+      );
     } catch (error) {
       if (
         error.message.includes("ENOTFOUND") ||
@@ -130,12 +138,14 @@ class NonSessionTapper {
         error.message.includes("ECONNREFUSED")
       ) {
         logger.error(
-          `${this.session_name} | Error: Unable to resolve the proxy address. The proxy server at ${proxy.ip}:${proxy.port} could not be found. Please check the proxy address and your network connection.`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error: Unable to resolve the proxy address. The proxy server at ${proxy.ip}:${proxy.port} could not be found. Please check the proxy address and your network connection.`
         );
-        logger.error(`${this.session_name} | No proxy will be used.`);
+        logger.error(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | No proxy will be used.`
+        );
       } else {
         logger.error(
-          `${this.session_name} | Proxy: ${proxy.ip}:${proxy.port} | Error: ${error.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Proxy: ${proxy.ip}:${proxy.port} | Error: ${error.message}`
         );
       }
 
@@ -205,7 +215,7 @@ class NonSessionTapper {
 
           if (daily_reward?.status == 0) {
             logger.info(
-              `${this.session_name} | 🎉 Claimed daily reward | Points: <gr>+${daily_reward?.data?.today_points}</gr> | Play Passes: <gr>+${daily_reward?.data?.today_game}</gr>`
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 🎉 Claimed daily reward | Points: <gr>+${daily_reward?.data?.today_points}</gr> | Play Passes: <gr>+${daily_reward?.data?.today_game}</gr>`
             );
             sleep_daily_reward = _.floor(
               new Date(moment().add(1, "days").format("YYYY-MM-DD")).getTime() /
@@ -213,7 +223,7 @@ class NonSessionTapper {
             );
           } else if (daily_reward?.message?.includes("already_check")) {
             logger.warning(
-              `${this.session_name} | ⚠️ Already claimed daily reward | Skipping....`
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ⚠️ Already claimed daily reward | Skipping....`
             );
             sleep_daily_reward = _.floor(
               new Date(moment().add(1, "days").format("YYYY-MM-DD")).getTime() /
@@ -231,7 +241,7 @@ class NonSessionTapper {
           if (combo_info?.status == 0 && !_.isEmpty(combo_info_data)) {
             if (combo_info_data?.status > 0) {
               logger.info(
-                `${this.session_name} | Combo already claimed | Skipping....`
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Combo already claimed | Skipping....`
               );
             } else if (
               combo_info_data?.status == 0 &&
@@ -244,11 +254,11 @@ class NonSessionTapper {
 
               if (claim_combo?.status == 0) {
                 logger.info(
-                  `${this.session_name} | 🎉 Claimed combo | Points: <gr>+${combo_info_data?.score}</gr> | Combo code: <ye>${combo_info_data?.code}</ye>`
+                  `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 🎉 Claimed combo | Points: <gr>+${combo_info_data?.score}</gr> | Combo code: <ye>${combo_info_data?.code}</ye>`
                 );
               } else {
                 logger.warning(
-                  `${this.session_name} | ⚠️ Error while claiming combo: ${claim_combo?.message}`
+                  `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ⚠️ Error while claiming combo: ${claim_combo?.message}`
                 );
               }
             }
@@ -265,7 +275,7 @@ class NonSessionTapper {
           if (get_stars?.status == 0 && !_.isEmpty(get_stars?.data)) {
             if (get_stars?.data?.status > 2) {
               logger.info(
-                `${this.session_name} | Stars already claimed | Skipping....`
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Stars already claimed | Skipping....`
               );
             } else if (
               get_stars?.data?.status < 3 &&
@@ -281,11 +291,11 @@ class NonSessionTapper {
               const claim_stars = await this.api.claim_task(http_client, data);
               if (claim_stars?.status == 0 && start_stars_claim?.status == 0) {
                 logger.info(
-                  `${this.session_name} | 🎉 Claimed stars | Stars: <gr>+${start_stars_claim?.data?.stars}</gr>`
+                  `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 🎉 Claimed stars | Stars: <gr>+${start_stars_claim?.data?.stars}</gr>`
                 );
               } else {
                 logger.warning(
-                  `${this.session_name} | ⚠️ Error while claiming stars: ${claim_stars?.message} || ${start_stars_claim?.message}`
+                  `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ⚠️ Error while claiming stars: ${claim_stars?.message} || ${start_stars_claim?.message}`
                 );
               }
             }
@@ -318,13 +328,15 @@ class NonSessionTapper {
                 farm_info_data
               );
               logger.info(
-                `${this.session_name} | 🌱 Farming started | Duration: ${moment(
+                `<ye>[${this.bot_name}]</ye> | ${
+                  this.session_name
+                } | 🌱 Farming started | Duration: ${moment(
                   start_farm?.data?.end_at * 1000
                 ).fromNow(true)}`
               );
             } else {
               logger.warning(
-                `${this.session_name} | ⚠️ Error while starting farming: ${start_farm?.message}`
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ⚠️ Error while starting farming: ${start_farm?.message}`
               );
             }
           } else if (farm_info?.status == 0 && !_.isEmpty(farm_info?.data)) {
@@ -338,19 +350,20 @@ class NonSessionTapper {
                 farm_info_data
               );
               if (claim_farm?.status == 0) {
+                await sleep(5);
                 profile_data = await this.api.get_user_data(http_client);
                 await this.api.start_farming(http_client, farm_info_data);
                 logger.info(
-                  `${this.session_name} | 🌱 Claimed farm reward | Balance: <la>${profile_data?.data?.available_balance}</la> <gr>(+${claim_farm?.data?.points})</gr> | Play Passes: ${claim_farm?.data?.today_game}`
+                  `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 🌱 Claimed farm reward | Balance: <la>${profile_data?.data?.available_balance}</la> <gr>(+${claim_farm?.data?.points})</gr> | Play Passes: ${claim_farm?.data?.today_game}`
                 );
               } else {
                 logger.warning(
-                  `${this.session_name} | ⚠️ Error while claiming farm reward: ${claim_farm?.message}`
+                  `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ⚠️ Error while claiming farm reward: ${claim_farm?.message}`
                 );
               }
             } else {
               logger.info(
-                `${
+                `<ye>[${this.bot_name}]</ye> | ${
                   this.session_name
                 } | 🌱 Farming is in progress | Time left: ${moment(
                   farm_info?.data?.end_at * 1000
@@ -359,7 +372,7 @@ class NonSessionTapper {
             }
           } else {
             logger.warning(
-              `${this.session_name} | ⚠️ Error while getting farm info: ${farm_info?.message}`
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ⚠️ Error while getting farm info: ${farm_info?.message}`
             );
           }
         }
@@ -369,9 +382,9 @@ class NonSessionTapper {
         // Play game
         while (profile_data?.data?.play_passes > 0 && settings.AUTO_PLAY_GAME) {
           logger.info(
-            `${this.session_name} | sleeping for 5 seconds before starting game...`
+            `<ye>[${this.bot_name}]</ye> | ${this.session_name} | sleeping for 20 seconds before starting game...`
           );
-          await sleep(5);
+          await sleep(20);
           const data = { game_id: this.TOIY_g };
           const start_game_response = await this.api.start_game(
             http_client,
@@ -383,7 +396,9 @@ class NonSessionTapper {
             !_.isEmpty(start_game_response?.data)
           ) {
             logger.info(
-              `${this.session_name} | 🎲 Game started | Duration: ${
+              `<ye>[${this.bot_name}]</ye> | ${
+                this.session_name
+              } | 🎲 Game started | Duration: ${
                 start_game_response?.data?.end_at -
                 start_game_response?.data?.start_at
               } seconds`
@@ -411,26 +426,28 @@ class NonSessionTapper {
             ) {
               profile_data = await this.api.get_user_data(http_client);
               logger.info(
-                `${this.session_name} | 🎉 Game reward claimed | Balance: <la>${profile_data?.data?.available_balance}</la> (<gr>+${claim_game_reward_response?.data?.points}</gr>) | Available: Play Passes <ye>${profile_data?.data?.play_passes}</ye>`
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 🎉 Game reward claimed | Balance: <la>${profile_data?.data?.available_balance}</la> (<gr>+${claim_game_reward_response?.data?.points}</gr>) | Available: Play Passes <ye>${profile_data?.data?.play_passes}</ye>`
               );
             } else {
               logger.error(
-                `${this.session_name} | Error while <b>claiming game reward:</b>: ${claim_game_reward_response?.message}`
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>claiming game reward:</b>: ${claim_game_reward_response?.message}`
               );
             }
           } else {
             logger.error(
-              `${this.session_name} | Error while <b>playing game:</b>: ${start_game_response?.message}`
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>playing game:</b>: ${start_game_response?.message}`
             );
           }
 
           await sleep(3);
         }
       } catch (error) {
-        logger.error(`${this.session_name} | ❗️Unknown error: ${error}`);
+        logger.error(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ❗️Unknown error: ${error}`
+        );
       } finally {
         logger.info(
-          `${this.session_name} | 😴 Sleeping for ${settings.SLEEP_BETWEEN_TAP} seconds...`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 😴 Sleeping for ${settings.SLEEP_BETWEEN_TAP} seconds...`
         );
         await sleep(settings.SLEEP_BETWEEN_TAP);
       }

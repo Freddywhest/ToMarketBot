@@ -86,6 +86,7 @@ class Logger {
   }
 
   info(message) {
+    this.prefix = `[${moment().format("YYYY-MM-DD HH:mm:ss")}]`;
     console.log(
       this.#convertHtmlElementToAnsiColor(
         `${this.prefix} | <bl>INFO</bl> | ${message}`
@@ -94,6 +95,7 @@ class Logger {
   }
 
   warning(message) {
+    this.prefix = `[${moment().format("YYYY-MM-DD HH:mm:ss")}]`;
     console.log(
       this.#convertHtmlElementToAnsiColor(
         `${this.prefix} | <ye>WARN</ye> | ${message}`
@@ -102,6 +104,7 @@ class Logger {
   }
 
   error(message) {
+    this.prefix = `[${moment().format("YYYY-MM-DD HH:mm:ss")}]`;
     console.log(
       this.#convertHtmlElementToAnsiColor(
         `${this.prefix} | <re>ERROR</re> | ${message}`
@@ -110,6 +113,7 @@ class Logger {
   }
 
   debug(message) {
+    this.prefix = `[${moment().format("YYYY-MM-DD HH:mm:ss")}]`;
     console.log(
       this.#convertHtmlElementToAnsiColor(
         `${this.prefix} | <la>DEBUG</la> | ${message}`
@@ -118,6 +122,7 @@ class Logger {
   }
 
   success(message) {
+    this.prefix = `[${moment().format("YYYY-MM-DD HH:mm:ss")}]`;
     console.log(
       this.#convertHtmlElementToAnsiColor(
         `${this.prefix} | <gr>SUCCESS</gr> | ${message}`
@@ -155,6 +160,7 @@ class Logger {
   }
 
   paragraph(message) {
+    this.prefix = `[${moment().format("YYYY-MM-DD HH:mm:ss")}]`;
     this.#addRoundedBorder(
       this.#convertHtmlElementToAnsiColor(
         `<u>${this.prefix}</u> <br>

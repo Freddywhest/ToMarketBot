@@ -3,8 +3,9 @@ const logger = require("../utils/logger");
 const sleep = require("../utils/sleep");
 
 class ApiRequest {
-  constructor(session_name) {
+  constructor(session_name, bot_name) {
     this.session_name = session_name;
+    this.bot_name = bot_name;
   }
 
   async get_user_data(http_client) {
@@ -17,7 +18,9 @@ class ApiRequest {
       const regex = /ENOTFOUND\s([^\s]+)/;
       const match = error.message.match(regex);
       logger.error(
-        `${this.session_name} | Error while getting User Data: ${
+        `<ye>[${this.bot_name}]</ye> | ${
+          this.session_name
+        } | Error while getting User Data: ${
           error.message.includes("ENOTFOUND") ||
           error.message.includes("getaddrinfo") ||
           error.message.includes("ECONNREFUSED")
@@ -41,11 +44,11 @@ class ApiRequest {
     } catch (error) {
       if (error?.response?.data?.message) {
         logger.warning(
-          `${this.session_name} | Error while <b>getting farm info:</b> ${error?.response?.data?.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>getting farm info:</b> ${error?.response?.data?.message}`
         );
       } else {
         logger.error(
-          `${this.session_name} | Error while <b>getting farm info:</b>: ${error.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>getting farm info:</b>: ${error.message}`
         );
       }
     }
@@ -61,11 +64,11 @@ class ApiRequest {
     } catch (error) {
       if (error?.response?.data?.message) {
         logger.warning(
-          `${this.session_name} | Error while <b>starting farming:</b> ${error?.response?.data?.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>starting farming:</b> ${error?.response?.data?.message}`
         );
       } else {
         logger.error(
-          `${this.session_name} | Error while <b>starting farming:</b>: ${error.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>starting farming:</b>: ${error.message}`
         );
       }
     }
@@ -81,11 +84,11 @@ class ApiRequest {
     } catch (error) {
       if (error?.response?.data?.message) {
         logger.warning(
-          `${this.session_name} | Error while <b>starting game:</b> ${error?.response?.data?.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>starting game:</b> ${error?.response?.data?.message}`
         );
       } else {
         logger.error(
-          `${this.session_name} | Error while <b>starting game:</b>: ${error.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>starting game:</b>: ${error.message}`
         );
       }
     }
@@ -101,11 +104,11 @@ class ApiRequest {
     } catch (error) {
       if (error?.response?.data?.message) {
         logger.warning(
-          `${this.session_name} | Error while <b>claiming game reward:</b> ${error?.response?.data?.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>claiming game reward:</b> ${error?.response?.data?.message}`
         );
       } else {
         logger.error(
-          `${this.session_name} | Error while <b>claiming game reward:</b>: ${error.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>claiming game reward:</b>: ${error.message}`
         );
       }
     }
@@ -121,11 +124,11 @@ class ApiRequest {
     } catch (error) {
       if (error?.response?.data?.message) {
         logger.warning(
-          `${this.session_name} | Error while <b>claiming daily reward:</b> ${error?.response?.data?.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>claiming daily reward:</b> ${error?.response?.data?.message}`
         );
       } else {
         logger.error(
-          `${this.session_name} | Error while <b>claiming daily reward:</b>: ${error.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>claiming daily reward:</b>: ${error.message}`
         );
       }
     }
@@ -141,11 +144,11 @@ class ApiRequest {
     } catch (error) {
       if (error?.response?.data?.message) {
         logger.warning(
-          `${this.session_name} | Error while <b>claiming farming reward:</b> ${error?.response?.data?.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>claiming farming reward:</b> ${error?.response?.data?.message}`
         );
       } else {
         logger.error(
-          `${this.session_name} | Error while <b>claiming farming reward:</b>: ${error.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>claiming farming reward:</b>: ${error.message}`
         );
       }
     }
@@ -161,11 +164,11 @@ class ApiRequest {
     } catch (error) {
       if (error?.response?.data?.message) {
         logger.warning(
-          `${this.session_name} | Error while <b>claiming task:</b> ${error?.response?.data?.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>claiming task:</b> ${error?.response?.data?.message}`
         );
       } else {
         logger.error(
-          `${this.session_name} | Error while <b>claiming task:</b>: ${error.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>claiming task:</b>: ${error.message}`
         );
       }
     }
@@ -180,11 +183,11 @@ class ApiRequest {
     } catch (error) {
       if (error?.response?.data?.message) {
         logger.warning(
-          `${this.session_name} | Error while <b>getting combo:</b> ${error?.response?.data?.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>getting combo:</b> ${error?.response?.data?.message}`
         );
       } else {
         logger.error(
-          `${this.session_name} | Error while <b>getting combo:</b>: ${error.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>getting combo:</b>: ${error.message}`
         );
       }
     }
@@ -199,11 +202,11 @@ class ApiRequest {
     } catch (error) {
       if (error?.response?.data?.message) {
         logger.warning(
-          `${this.session_name} | Error while <b>getting stars:</b> ${error?.response?.data?.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>getting stars:</b> ${error?.response?.data?.message}`
         );
       } else {
         logger.error(
-          `${this.session_name} | Error while <b>getting stars:</b>: ${error.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>getting stars:</b>: ${error.message}`
         );
       }
     }
@@ -219,11 +222,11 @@ class ApiRequest {
     } catch (error) {
       if (error?.response?.data?.message) {
         logger.warning(
-          `${this.session_name} | Error while <b>starting stars claim:</b> ${error?.response?.data?.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>starting stars claim:</b> ${error?.response?.data?.message}`
         );
       } else {
         logger.error(
-          `${this.session_name} | Error while <b>starting stars claim:</b>: ${error.message}`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>starting stars claim:</b>: ${error.message}`
         );
       }
       return null;

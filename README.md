@@ -28,6 +28,8 @@
 | **AUTO_PLAY_GAME**          | Whether the bot play the games (True / False)                             |
 | **AUTO_CLAIM_DAILY_REWARD** | Whether the bot should claim the daily rewards (True / False)             |
 | **AUTO_FARM**               | Whether the bot should start and claim farming (True / False)             |
+| **AUTO_CLAIM_STARTS**       | Whether the bot should claim stars (True / False)                         |
+| **AUTO_CLAIM_COMBO**        | Whether the bot should claim combo (True / False)                         |
 | **SLEEP_BETWEEN_TAP**       | Delay between taps in seconds (eg. 70)                                    |
 | **USE_QUERY_ID**            | Whether to use query ids instead of sessions (True / False)               |
 | **USE_PROXY_FROM_FILE**     | Whether to use proxy from the `bot/config/proxies.js` file (True / False) |
