@@ -266,6 +266,7 @@ class Tapper {
     let next_combo_check = 0;
 
     let profile_data;
+    let rank_data;
     let sleep_daily_reward = 0;
 
     if (settings.USE_PROXY_FROM_FILE && proxy) {
@@ -314,13 +315,76 @@ class Tapper {
         }
         // Get profile data
         profile_data = await this.api.get_user_data(http_client);
+        rank_data = await this.api.get_rank_data(http_client);
 
-        if (_.isEmpty(profile_data?.data)) {
+        if (_.isEmpty(profile_data?.data) || _.isEmpty(rank_data)) {
           continue;
         }
 
         await sleep(3);
 
+        if (rank_data?.data?.isCreated == false && rank_data?.status === 0) {
+          //log check rank data
+          logger.info(
+            `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Evaluating Rank...`
+          );
+
+          const evaluate_rank = await this.api.evaluate_rank_data(http_client);
+          if (!_.isEmpty(evaluate_rank?.data) && evaluate_rank?.status === 0) {
+            logger.info(
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Rank evaluated | Tomato stars: <pi>${evaluate_rank?.data?.stars}</pi> | Tomato scores: <la>${evaluate_rank?.data?.tomatoScore}</la>`
+            );
+            logger.info(
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Sleeping 3 seconds before checking rank`
+            );
+            await sleep(3);
+            const create_rank = await this.api.create_rank_data(http_client);
+            if (!_.isEmpty(create_rank?.data) && create_rank?.status === 0) {
+              logger.info(
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Rank created | Current rank: <la>${create_rank?.data?.currentRank?.name}</la>`
+              );
+            } else {
+              logger.info(
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Rank not created | Skipping....`
+              );
+            }
+          } else {
+            logger.info(
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Rank not evaluated | Skipping....`
+            );
+          }
+        }
+        await sleep(3);
+        rank_data = await this.api.get_rank_data(http_client);
+        if (
+          !_.isEmpty(rank_data?.data) &&
+          rank_data?.status === 0 &&
+          rank_data?.data?.isCreated == true
+        ) {
+          if (rank_data?.data?.unusedStars > 0) {
+            logger.info(
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Upgrading rank with <bl>${rank_data?.data?.unusedStars}</bl> stars`
+            );
+            await sleep(2);
+
+            const upgrade_rank = await this.api.upgrade_rank(http_client, {
+              stars: rank_data?.data?.unusedStars,
+            });
+            if (!_.isEmpty(upgrade_rank?.data) && upgrade_rank?.status === 0) {
+              logger.info(
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Rank upgraded | New rank: <la>${upgrade_rank?.data?.currentRank?.name}</la>`
+              );
+            } else {
+              logger.warning(
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Could not upgrade rank`
+              );
+            }
+          } else {
+            logger.info(
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Your current rank is <la>${rank_data?.data?.currentRank?.name}</la> | Stars used: <pi>${rank_data?.data?.usedStars}</pi>`
+            );
+          }
+        }
         // Claim daily reward
         if (
           settings.AUTO_CLAIM_DAILY_REWARD &&
