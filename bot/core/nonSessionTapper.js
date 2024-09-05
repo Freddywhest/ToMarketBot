@@ -125,7 +125,6 @@ class NonSessionTapper {
 
   async #check_proxy(http_client, proxy) {
     try {
-      http_client.defaults.headers["host"] = "httpbin.org";
       const response = await http_client.get("https://httpbin.org/ip");
       const ip = response.data.origin;
       logger.info(
@@ -185,7 +184,6 @@ class NonSessionTapper {
       try {
         const currentTime = _.floor(Date.now() / 1000);
         if (currentTime - access_token_created_time >= 3600) {
-          http_client.defaults.headers["host"] = app.host;
           const tg_web_data = await this.#get_tg_web_data();
           const get_token = await this.#get_access_token(
             tg_web_data,
