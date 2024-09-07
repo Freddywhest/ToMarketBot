@@ -28,11 +28,10 @@ const settings = {
     ? process.env.AUTO_CLAIM_STARTS.toLowerCase() === "true"
     : true,
 
-  SLEEP_BETWEEN_TAP: process.env.SLEEP_BETWEEN_TAP
-    ? process.env.SLEEP_BETWEEN_TAP.split(",").map((str) =>
-        parseInt(str.trim())
-      )
-    : 70,
+  SLEEP_BETWEEN_TAP:
+    process.env.SLEEP_BETWEEN_TAP && /^\d+$/.test(process.env.SLEEP_BETWEEN_TAP)
+      ? parseInt(process.env.SLEEP_BETWEEN_TAP)
+      : 70,
 
   USE_PROXY_FROM_FILE: process.env.USE_PROXY_FROM_FILE
     ? process.env.USE_PROXY_FROM_FILE.toLowerCase() === "true"
