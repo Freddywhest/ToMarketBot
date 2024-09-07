@@ -11,6 +11,7 @@ const ApiRequest = require("./api");
 const _ = require("lodash");
 const moment = require("moment");
 const path = require("path");
+const _isArray = require("../utils/_isArray");
 
 class NonSessionTapper {
   constructor(query_id, query_name) {
@@ -444,10 +445,30 @@ class NonSessionTapper {
           `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ❗️Unknown error: ${error}`
         );
       } finally {
+        let ran_sleep;
+        if (_isArray(settings.SLEEP_BETWEEN_TAP)) {
+          if (
+            _.isInteger(settings.SLEEP_BETWEEN_TAP[0]) &&
+            _.isInteger(settings.SLEEP_BETWEEN_TAP[1])
+          ) {
+            ran_sleep = _.random(
+              settings.SLEEP_BETWEEN_TAP[0],
+              settings.SLEEP_BETWEEN_TAP[1]
+            );
+          } else {
+            ran_sleep = _.random(450, 800);
+          }
+        } else if (_.isInteger(settings.SLEEP_BETWEEN_TAP)) {
+          const ran_add = _.random(20, 50);
+          ran_sleep = settings.SLEEP_BETWEEN_TAP + ran_add;
+        } else {
+          ran_sleep = _.random(450, 800);
+        }
+
         logger.info(
-          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 😴 Sleeping for ${settings.SLEEP_BETWEEN_TAP} seconds...`
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Sleeping for ${ran_sleep} seconds...`
         );
-        await sleep(settings.SLEEP_BETWEEN_TAP);
+        await sleep(ran_sleep);
       }
     }
   }
