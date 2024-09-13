@@ -1,6 +1,7 @@
 const app = require("../config/app");
 const logger = require("../utils/logger");
 const sleep = require("../utils/sleep");
+const _ = require("lodash");
 
 class ApiRequest {
   constructor(session_name, bot_name) {
@@ -31,6 +32,37 @@ class ApiRequest {
         }`
       );
       await sleep(3); // Sleep for 3 seconds
+    }
+  }
+
+  async validate_query_id(http_client, data) {
+    try {
+      const response = await http_client.post(
+        `${app.apiUrl}/tomarket-game/v1/user/login`,
+        JSON.stringify(data)
+      );
+      if (
+        response?.data?.status === 400 ||
+        response?.data?.message?.toLowerCase()?.includes("invalid init data")
+      ) {
+        return false;
+      }
+
+      if (!_.isEmpty(response?.data?.data?.access_token)) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      if (
+        error?.response?.data?.message
+          ?.toLowerCase()
+          ?.includes("invalid init data signature") ||
+        error?.response?.status == 401
+      ) {
+        return false;
+      }
+
+      throw error;
     }
   }
 

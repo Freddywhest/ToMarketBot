@@ -14,3 +14,6 @@ simulate_device.json
 
 # Ignore the Push.bat
 Push.bat
+
+cache/
+tmp/

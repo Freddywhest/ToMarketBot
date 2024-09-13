@@ -2,7 +2,7 @@ const { default: axios } = require("axios");
 const logger = require("../utils/logger");
 const headers = require("./header");
 const { Api } = require("telegram");
-const { SocksProxyAgent } = require("socks-proxy-agent");
+const { HttpsProxyAgent } = require("https-proxy-agent");
 const settings = require("../config/config");
 const app = require("../config/app");
 const user_agents = require("../config/userAgents");
@@ -14,6 +14,7 @@ const _ = require("lodash");
 const moment = require("moment");
 const path = require("path");
 const _isArray = require("../utils/_isArray");
+const FdyTmp = require("fdy-tmp");
 
 class Tapper {
   constructor(tg_client) {
@@ -97,11 +98,11 @@ class Tapper {
       if (!proxy) return null;
       let proxy_url;
       if (!proxy.password && !proxy.username) {
-        proxy_url = `socks${proxy.socksType}://${proxy.ip}:${proxy.port}`;
+        proxy_url = `${proxy.protocol}://${proxy.ip}:${proxy.port}`;
       } else {
-        proxy_url = `socks${proxy.socksType}://${proxy.username}:${proxy.password}@${proxy.ip}:${proxy.port}`;
+        proxy_url = `${proxy.protocol}://${proxy.username}:${proxy.password}@${proxy.ip}:${proxy.port}`;
       }
-      return new SocksProxyAgent(proxy_url);
+      return new HttpsProxyAgent(proxy_url);
     } catch (e) {
       logger.error(
         `<ye>[${this.bot_name}]</ye> | ${
@@ -114,15 +115,56 @@ class Tapper {
 
   async #get_tg_web_data() {
     try {
+      const tmp = new FdyTmp({
+        fileName: `${this.bot_name}.fdy.tmp`,
+        tmpPath: path.join(process.cwd(), "cache/queries"),
+      });
+      if (tmp.hasJsonElement(this.session_name)) {
+        const queryStringFromCache = tmp.getJson(this.session_name);
+        if (!_.isEmpty(queryStringFromCache)) {
+          const jsonData = {
+            init_data: queryStringFromCache,
+            invite_code: "00003Ozq",
+            is_bot: false,
+          };
+
+          const va_hc = axios.create({
+            headers: this.headers,
+            withCredentials: true,
+          });
+
+          const validate = await this.api.validate_query_id(va_hc, jsonData);
+
+          if (validate) {
+            logger.info(
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 🔄 Getting data from cache...`
+            );
+            if (this.tg_client.connected) {
+              await this.tg_client.disconnect();
+              await this.tg_client.destroy();
+            }
+            await sleep(5);
+            return jsonData;
+          } else {
+            tmp.deleteJsonElement(this.session_name);
+          }
+        }
+      }
+      await this.tg_client.connect();
       await this.tg_client.start();
       const platform = this.#get_platform(this.#get_user_agent());
+
+      if (!this.bot) {
+        this.bot = await this.tg_client.getInputEntity(app.bot);
+      }
+
       if (!this.runOnce) {
         logger.info(
           `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 📡 Waiting for authorization...`
         );
         const botHistory = await this.tg_client.invoke(
           new Api.messages.GetHistory({
-            peer: await this.tg_client.getInputEntity(app.bot),
+            peer: this.bot,
             limit: 10,
           })
         );
@@ -132,27 +174,41 @@ class Tapper {
               message: "/start",
               silent: true,
               noWebpage: true,
-              peer: await this.tg_client.getInputEntity(app.peer),
+              peer: this.bot,
             })
           );
         }
       }
+
+      await sleep(5);
+
       const result = await this.tg_client.invoke(
         new Api.messages.RequestWebView({
-          peer: await this.tg_client.getInputEntity(app.peer),
-          bot: await this.tg_client.getInputEntity(app.bot),
+          peer: this.bot,
+          bot: this.bot,
           platform,
-          from_bot_menu: false,
+          from_bot_menu: true,
           url: app.webviewUrl,
         })
       );
+
       const authUrl = result.url;
       const tgWebData = authUrl.split("#", 2)[1];
-      const data = parser.toJson(
-        decodeURIComponent(this.#clean_tg_web_data(tgWebData))
+      logger.info(
+        `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 💾 Storing data in cache...`
       );
+
+      await sleep(5);
+
+      tmp
+        .addJson(
+          this.session_name,
+          decodeURIComponent(this.#clean_tg_web_data(tgWebData))
+        )
+        .save();
+
       const jsonData = {
-        init_data: `${parser.toQueryString(data)}`,
+        init_data: decodeURIComponent(this.#clean_tg_web_data(tgWebData)),
         invite_code: "00003Ozq",
         is_bot: false,
       };
@@ -192,17 +248,16 @@ class Tapper {
       }
       return null;
     } finally {
-      /* if (this.tg_client.connected) {
+      if (this.tg_client.connected) {
+        await this.tg_client.disconnect();
         await this.tg_client.destroy();
-      } */
-      await sleep(1);
-      if (!this.runOnce) {
-        logger.info(
-          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 🚀 Starting session...`
-        );
       }
-
       this.runOnce = true;
+      if (this.sleep_floodwait > new Date().getTime() / 1000) {
+        await sleep(this.sleep_floodwait - new Date().getTime() / 1000);
+        return await this.#get_tg_web_data();
+      }
+      await sleep(3);
     }
   }
 
@@ -213,6 +268,15 @@ class Tapper {
         JSON.stringify(tgWebData)
       );
 
+      if (
+        response?.data?.status === 400 ||
+        response?.data?.message?.toLowerCase()?.includes("invalid init data")
+      ) {
+        logger.error(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ❗️ Error while getting Access Token: Invalid init data signature`
+        );
+        return null;
+      }
       return response.data;
     } catch (error) {
       if (error?.response?.status > 499) {
