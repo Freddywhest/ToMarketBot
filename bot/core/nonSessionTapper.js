@@ -414,7 +414,8 @@ class NonSessionTapper {
         // Play game
         while (
           !_.isEmpty(profile_data?.data) &&
-          !_.isEmpty(profile_data?.data?.play_passes) &&
+          !_.isUndefined(profile_data?.data?.play_passes) &&
+          !_.isNull(profile_data?.data?.play_passes) &&
           profile_data?.data?.play_passes > 0 &&
           settings.AUTO_PLAY_GAME
         ) {

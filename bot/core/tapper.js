@@ -28,6 +28,7 @@ class Tapper {
     this.MVOH_dly = "fa873d13-d831-4d6f-8aee-9cff7a1d0db1";
     this.JUOY_f = "53b22103-c7ff-413d-bc63-20f6fb806a07";
     this.TOIY_g = "59bcd12e-04e2-404c-a172-311a0084587d";
+    this.bot = null;
   }
 
   #load_session_data() {
@@ -624,7 +625,8 @@ class Tapper {
         // Play game
         while (
           !_.isEmpty(profile_data?.data) &&
-          !_.isEmpty(profile_data?.data?.play_passes) &&
+          !_.isUndefined(profile_data?.data?.play_passes) &&
+          !_.isNull(profile_data?.data?.play_passes) &&
           profile_data?.data?.play_passes > 0 &&
           settings.AUTO_PLAY_GAME
         ) {
