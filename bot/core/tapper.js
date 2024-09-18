@@ -591,7 +591,6 @@ class Tapper {
                 http_client,
                 farm_info_data
               );
-
               if (claim_farm?.status == 0) {
                 await sleep(5);
                 profile_data = await this.api.get_user_data(http_client);
@@ -604,7 +603,7 @@ class Tapper {
                   `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ⚠️ Error while claiming farm reward: ${claim_farm?.message}`
                 );
               }
-            } else {
+            } else if (farm_info?.data?.end_at) {
               logger.info(
                 `<ye>[${this.bot_name}]</ye> | ${
                   this.session_name
@@ -623,7 +622,12 @@ class Tapper {
         await sleep(3);
 
         // Play game
-        while (profile_data?.data?.play_passes > 0 && settings.AUTO_PLAY_GAME) {
+        while (
+          !_.isEmpty(profile_data?.data) &&
+          !_.isEmpty(profile_data?.data?.play_passes) &&
+          profile_data?.data?.play_passes > 0 &&
+          settings.AUTO_PLAY_GAME
+        ) {
           logger.info(
             `<ye>[${this.bot_name}]</ye> | ${this.session_name} | sleeping for 20 seconds before starting game...`
           );

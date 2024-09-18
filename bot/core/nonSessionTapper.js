@@ -386,14 +386,14 @@ class NonSessionTapper {
                 profile_data = await this.api.get_user_data(http_client);
                 await this.api.start_farming(http_client, farm_info_data);
                 logger.info(
-                  `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 🌱 Claimed farm reward | Balance: <la>${profile_data?.data?.available_balance}</la> <gr>(+${claim_farm?.data?.points})</gr> | Play Passes: ${claim_farm?.data?.today_game}`
+                  `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 🌱 Claimed farm reward | Balance: <la>${profile_data?.data?.available_balance}</la> <gr>(+${claim_farm?.data?.points})</gr> | Play Passes: ${profile_data?.data?.play_passes}`
                 );
               } else {
                 logger.warning(
                   `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ⚠️ Error while claiming farm reward: ${claim_farm?.message}`
                 );
               }
-            } else {
+            } else if (farm_info?.data?.end_at) {
               logger.info(
                 `<ye>[${this.bot_name}]</ye> | ${
                   this.session_name
@@ -412,7 +412,12 @@ class NonSessionTapper {
         await sleep(3);
 
         // Play game
-        while (profile_data?.data?.play_passes > 0 && settings.AUTO_PLAY_GAME) {
+        while (
+          !_.isEmpty(profile_data?.data) &&
+          !_.isEmpty(profile_data?.data?.play_passes) &&
+          profile_data?.data?.play_passes > 0 &&
+          settings.AUTO_PLAY_GAME
+        ) {
           logger.info(
             `<ye>[${this.bot_name}]</ye> | ${this.session_name} | sleeping for 20 seconds before starting game...`
           );
