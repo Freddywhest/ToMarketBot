@@ -14,6 +14,10 @@ const settings = {
     ? process.env.AUTO_PLAY_GAME.toLowerCase() === "true"
     : true,
 
+  AUTO_TASKS: process.env.AUTO_TASKS
+    ? process.env.AUTO_TASKS.toLowerCase() === "true"
+    : true,
+
   AUTO_CLAIM_DAILY_REWARD: process.env.AUTO_CLAIM_DAILY_REWARD
     ? process.env.AUTO_CLAIM_DAILY_REWARD.toLowerCase() === "true"
     : true,
@@ -36,10 +40,20 @@ const settings = {
       : process.env.SLEEP_BETWEEN_TAP &&
         /^\d+$/.test(process.env.SLEEP_BETWEEN_TAP)
       ? parseInt(process.env.SLEEP_BETWEEN_TAP)
-      : 150,
+      : [1500, 2000],
 
-  USE_PROXY_FROM_FILE: process.env.USE_PROXY_FROM_FILE
-    ? process.env.USE_PROXY_FROM_FILE.toLowerCase() === "true"
+  DELAY_BETWEEN_STARTING_BOT:
+    process.env.DELAY_BETWEEN_STARTING_BOT &&
+    _isArray(process.env.DELAY_BETWEEN_STARTING_BOT)
+      ? JSON.parse(process.env.DELAY_BETWEEN_STARTING_BOT)
+      : [15, 20],
+
+  USE_PROXY_FROM_TXT_FILE: process.env.USE_PROXY_FROM_TXT_FILE
+    ? process.env.USE_PROXY_FROM_TXT_FILE.toLowerCase() === "true"
+    : false,
+
+  USE_PROXY_FROM_JS_FILE: process.env.USE_PROXY_FROM_JS_FILE
+    ? process.env.USE_PROXY_FROM_JS_FILE.toLowerCase() === "true"
     : false,
 
   USE_QUERY_ID: process.env.USE_QUERY_ID

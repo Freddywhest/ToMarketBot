@@ -18,26 +18,7 @@ const main = async () => {
         "</bl>"
     );
   }
-  if (settings.USE_QUERY_ID === false) {
-    await luncher.process();
-  } else {
-    console.log(banner);
-    let tasks = [];
-    const getProxies = settings.USE_PROXY_FROM_FILE ? proxies : null;
-    let proxiesCycle = getProxies ? getProxies[Symbol.iterator]() : null;
-    const query_ids = require(path.join(process.cwd(), "queryIds.json"));
-
-    for (const [query_name, query_id] of Object.entries(query_ids)) {
-      const proxy = proxiesCycle ? proxiesCycle.next().value : null;
-      try {
-        tasks.push(new NonSessionTapper(query_id, query_name).run(proxy));
-      } catch (error) {
-        logger.error(`Error in task for tg_client: ${error.message}`);
-      }
-    }
-
-    await Promise.all(tasks);
-  }
+  await luncher.process();
 };
 
 // Wrap main function execution in an async context to handle asynchronous operations

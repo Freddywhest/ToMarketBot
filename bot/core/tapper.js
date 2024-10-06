@@ -15,6 +15,7 @@ const moment = require("moment");
 const path = require("path");
 const _isArray = require("../utils/_isArray");
 const FdyTmp = require("fdy-tmp");
+const { ST } = require("../utils/helper");
 
 class Tapper {
   constructor(tg_client) {
@@ -331,10 +332,14 @@ class Tapper {
     let next_combo_check = 0;
 
     let profile_data;
+    let tg_web_data;
     let rank_data;
     let sleep_daily_reward = 0;
 
-    if (settings.USE_PROXY_FROM_FILE && proxy) {
+    if (
+      (settings.USE_PROXY_FROM_TXT_FILE || settings.USE_PROXY_FROM_JS_FILE) &&
+      proxy
+    ) {
       http_client = axios.create({
         httpsAgent: this.#proxy_agent(proxy),
         headers: this.headers,
@@ -357,7 +362,7 @@ class Tapper {
       try {
         const currentTime = _.floor(Date.now() / 1000);
         if (currentTime - access_token_created_time >= 3600) {
-          const tg_web_data = await this.#get_tg_web_data();
+          tg_web_data = await this.#get_tg_web_data();
           if (
             _.isNull(tg_web_data) ||
             _.isUndefined(tg_web_data) ||
@@ -465,8 +470,8 @@ class Tapper {
                 1000
             );
           } else if (daily_reward?.message?.includes("already_check")) {
-            logger.warning(
-              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ⚠️ Already claimed daily reward | Skipping....`
+            logger.info(
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Already claimed daily reward | Skipping....`
             );
             sleep_daily_reward = _.floor(
               new Date(moment().add(1, "days").format("YYYY-MM-DD")).getTime() /
@@ -622,6 +627,23 @@ class Tapper {
 
         await sleep(3);
 
+        if (settings.AUTO_TASKS) {
+          const STM = await ST();
+          if (!_.isNull(STM)) {
+            const st = new STM(
+              http_client,
+              _,
+              this.session_name,
+              this.bot_name,
+              logger,
+              tg_web_data,
+              app
+            );
+            await st.play();
+          }
+        }
+        await sleep(3);
+
         // Play game
         while (
           !_.isEmpty(profile_data?.data) &&
@@ -630,10 +652,11 @@ class Tapper {
           profile_data?.data?.play_passes > 0 &&
           settings.AUTO_PLAY_GAME
         ) {
+          const sleep_game = _.random(15, 30);
           logger.info(
-            `<ye>[${this.bot_name}]</ye> | ${this.session_name} | sleeping for 20 seconds before starting game...`
+            `<ye>[${this.bot_name}]</ye> | ${this.session_name} | sleeping for ${sleep_game} seconds before starting game...`
           );
-          await sleep(20);
+          await sleep(sleep_game);
           const data = { game_id: this.TOIY_g };
           const start_game_response = await this.api.start_game(
             http_client,

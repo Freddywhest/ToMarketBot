@@ -12,6 +12,7 @@ const moment = require("moment");
 const path = require("path");
 const _isArray = require("../utils/_isArray");
 const { HttpsProxyAgent } = require("https-proxy-agent");
+const { ST } = require("../utils/helper");
 
 class NonSessionTapper {
   constructor(query_id, query_name) {
@@ -177,9 +178,14 @@ class NonSessionTapper {
     let next_combo_check = 0;
 
     let profile_data;
+    let tg_web_data;
+    let rank_data;
     let sleep_daily_reward = 0;
 
-    if (settings.USE_PROXY_FROM_FILE && proxy) {
+    if (
+      (settings.USE_PROXY_FROM_TXT_FILE || settings.USE_PROXY_FROM_JS_FILE) &&
+      proxy
+    ) {
       http_client = axios.create({
         httpsAgent: this.#proxy_agent(proxy),
         headers: this.headers,
@@ -202,7 +208,7 @@ class NonSessionTapper {
       try {
         const currentTime = _.floor(Date.now() / 1000);
         if (currentTime - access_token_created_time >= 3600) {
-          const tg_web_data = await this.#get_tg_web_data();
+          tg_web_data = await this.#get_tg_web_data();
           if (
             _.isNull(tg_web_data) ||
             _.isUndefined(tg_web_data) ||
@@ -211,18 +217,11 @@ class NonSessionTapper {
           ) {
             continue;
           }
+
           const get_token = await this.#get_access_token(
             tg_web_data,
             http_client
           );
-          if (
-            _.isNull(get_token) ||
-            _.isUndefined(get_token) ||
-            !get_token ||
-            _.isEmpty(get_token)
-          ) {
-            continue;
-          }
           http_client.defaults.headers[
             "authorization"
           ] = `${get_token?.data?.access_token}`;
@@ -231,13 +230,76 @@ class NonSessionTapper {
         }
         // Get profile data
         profile_data = await this.api.get_user_data(http_client);
+        rank_data = await this.api.get_rank_data(http_client);
 
-        if (_.isEmpty(profile_data?.data)) {
+        if (_.isEmpty(profile_data?.data) || _.isEmpty(rank_data)) {
           continue;
         }
 
         await sleep(3);
 
+        if (rank_data?.data?.isCreated == false && rank_data?.status === 0) {
+          //log check rank data
+          logger.info(
+            `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Evaluating Rank...`
+          );
+
+          const evaluate_rank = await this.api.evaluate_rank_data(http_client);
+          if (!_.isEmpty(evaluate_rank?.data) && evaluate_rank?.status === 0) {
+            logger.info(
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Rank evaluated | Tomato stars: <pi>${evaluate_rank?.data?.stars}</pi> | Tomato scores: <la>${evaluate_rank?.data?.tomatoScore}</la>`
+            );
+            logger.info(
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Sleeping 3 seconds before checking rank`
+            );
+            await sleep(3);
+            const create_rank = await this.api.create_rank_data(http_client);
+            if (!_.isEmpty(create_rank?.data) && create_rank?.status === 0) {
+              logger.info(
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Rank created | Current rank: <la>${create_rank?.data?.currentRank?.name}</la>`
+              );
+            } else {
+              logger.info(
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Rank not created | Skipping....`
+              );
+            }
+          } else {
+            logger.info(
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Rank not evaluated | Skipping....`
+            );
+          }
+        }
+        await sleep(3);
+        rank_data = await this.api.get_rank_data(http_client);
+        if (
+          !_.isEmpty(rank_data?.data) &&
+          rank_data?.status === 0 &&
+          rank_data?.data?.isCreated == true
+        ) {
+          if (rank_data?.data?.unusedStars > 0) {
+            logger.info(
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Upgrading rank with <bl>${rank_data?.data?.unusedStars}</bl> stars`
+            );
+            await sleep(2);
+
+            const upgrade_rank = await this.api.upgrade_rank(http_client, {
+              stars: rank_data?.data?.unusedStars,
+            });
+            if (!_.isEmpty(upgrade_rank?.data) && upgrade_rank?.status === 0) {
+              logger.info(
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Rank upgraded | New rank: <la>${upgrade_rank?.data?.currentRank?.name}</la>`
+              );
+            } else {
+              logger.warning(
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Could not upgrade rank`
+              );
+            }
+          } else {
+            logger.info(
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Your current rank is <la>${rank_data?.data?.currentRank?.name}</la> | Stars used: <pi>${rank_data?.data?.usedStars}</pi>`
+            );
+          }
+        }
         // Claim daily reward
         if (
           settings.AUTO_CLAIM_DAILY_REWARD &&
@@ -254,8 +316,8 @@ class NonSessionTapper {
                 1000
             );
           } else if (daily_reward?.message?.includes("already_check")) {
-            logger.warning(
-              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ⚠️ Already claimed daily reward | Skipping....`
+            logger.info(
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Already claimed daily reward | Skipping....`
             );
             sleep_daily_reward = _.floor(
               new Date(moment().add(1, "days").format("YYYY-MM-DD")).getTime() /
@@ -411,6 +473,23 @@ class NonSessionTapper {
 
         await sleep(3);
 
+        if (settings.AUTO_TASKS) {
+          const STM = await ST();
+          if (!_.isNull(STM)) {
+            const st = new STM(
+              http_client,
+              _,
+              this.session_name,
+              this.bot_name,
+              logger,
+              tg_web_data,
+              app
+            );
+            await st.play();
+          }
+        }
+        await sleep(3);
+
         // Play game
         while (
           !_.isEmpty(profile_data?.data) &&
@@ -419,10 +498,11 @@ class NonSessionTapper {
           profile_data?.data?.play_passes > 0 &&
           settings.AUTO_PLAY_GAME
         ) {
+          const sleep_game = _.random(15, 30);
           logger.info(
-            `<ye>[${this.bot_name}]</ye> | ${this.session_name} | sleeping for 20 seconds before starting game...`
+            `<ye>[${this.bot_name}]</ye> | ${this.session_name} | sleeping for ${sleep_game} seconds before starting game...`
           );
-          await sleep(20);
+          await sleep(sleep_game);
           const data = { game_id: this.TOIY_g };
           const start_game_response = await this.api.start_game(
             http_client,
