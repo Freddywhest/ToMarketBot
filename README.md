@@ -10,6 +10,7 @@
 | ------------------------------------------------------------- | :-------: |
 | Claiming daily reward                                         |    ✅     |
 | Claiming Farming reward                                       |    ✅     |
+| Claiming tasks                                                |    ✅     |
 | Starting Farming                                              |    ✅     |
 | Playing games                                                 |    ✅     |
 | Multithreading                                                |    ✅     |
@@ -22,17 +23,19 @@
 
 ## [Settings](https://github.com/FreddyWhest/ToMarketBot/blob/main/.env-example)
 
-| Settings                    | Description                                                               |
-| --------------------------- | ------------------------------------------------------------------------- |
-| **API_ID / API_HASH**       | Platform data from which to launch a Telegram session (stock - Android)   |
-| **AUTO_PLAY_GAME**          | Whether the bot play the games (True / False)                             |
-| **AUTO_CLAIM_DAILY_REWARD** | Whether the bot should claim the daily rewards (True / False)             |
-| **AUTO_FARM**               | Whether the bot should start and claim farming (True / False)             |
-| **AUTO_CLAIM_STARTS**       | Whether the bot should claim stars (True / False)                         |
-| **AUTO_CLAIM_COMBO**        | Whether the bot should claim combo (True / False)                         |
-| **SLEEP_BETWEEN_TAP**       | Delay between taps in seconds (eg. 70)                                    |
-| **USE_QUERY_ID**            | Whether to use query ids instead of sessions (True / False)               |
-| **USE_PROXY_FROM_FILE**     | Whether to use proxy from the `bot/config/proxies.js` file (True / False) |
+| Settings                       | Description                                                                |
+| ------------------------------ | -------------------------------------------------------------------------- |
+| **API_ID / API_HASH**          | Platform data from which to launch a Telegram session (stock - Android)    |
+| **AUTO_PLAY_GAME**             | Whether the bot play the games (True / False)                              |
+| **AUTO_CLAIM_DAILY_REWARD**    | Whether the bot should claim the daily rewards (True / False)              |
+| **AUTO_FARM**                  | Whether the bot should start and claim farming (True / False)              |
+| **AUTO_TASKS**                 | Whether the bot should claim tasks (True / False)                          |
+| **AUTO_CLAIM_STARTS**          | Whether the bot should claim stars (True / False)                          |
+| **AUTO_CLAIM_COMBO**           | Whether the bot should claim combo (True / False)                          |
+| **SLEEP_BETWEEN_TAP**          | Delay between taps in seconds (eg. 70)                                     |
+| **DELAY_BETWEEN_STARTING_BOT** | Delay between starting in seconds (eg. [20, 30])                           |
+| **USE_PROXY_FROM_JS_FILE**     | Whether to use proxy from the `bot/config/proxies.js` file (True / False)  |
+| **USE_PROXY_FROM_TXT_FILE**    | Whether to use proxy from the `bot/config/proxies.txt` file (True / False) |
 
 ## Installation
 
