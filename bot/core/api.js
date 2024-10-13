@@ -345,6 +345,48 @@ class ApiRequest {
       return null;
     }
   }
+
+  async get_tickets(http_client, init_data) {
+    try {
+      const response = await http_client.post(
+        `${app.apiUrl}/tomarket-game/v1/user/tickets`,
+        JSON.stringify({ language_code: "en", init_data })
+      );
+      return response.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        logger.warning(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>getting tickets:</b> ${error?.response?.data?.message}`
+        );
+      } else {
+        logger.error(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>getting tickets:</b> ${error.message}`
+        );
+      }
+      return null;
+    }
+  }
+
+  async spin(http_client) {
+    try {
+      const response = await http_client.post(
+        `${app.apiUrl}/tomarket-game/v1/spin/raffle`,
+        JSON.stringify({ category: "ticket_spin_1" })
+      );
+      return response.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        logger.warning(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>spinning:</b> ${error?.response?.data?.message}`
+        );
+      } else {
+        logger.error(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>spinning:</b> ${error.message}`
+        );
+      }
+      return null;
+    }
+  }
 }
 
 module.exports = ApiRequest;

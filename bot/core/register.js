@@ -25,6 +25,10 @@ class Register {
   }
 
   async #getSessionName() {
+    logger.warning(
+      `\n\n<ye>Warning:</ye> Creating a new session may log you out of other active sessions \nor may even get your telegram account banned.\nBy proceeding, you acknowledge and accept full responsibility for any consequences.\n\nMake sure you have completed the following before continuing:\n1. Linked an email to your Telegram account\n2. Make sure you are not using a virtual phone number\n3. Have a stable internet connection\n`
+    );
+
     const filePath = path.join(process.cwd(), "sessions");
     let sessionsName = await input({
       message: "Please enter your session name: ",

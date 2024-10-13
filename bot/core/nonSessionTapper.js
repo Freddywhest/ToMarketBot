@@ -448,7 +448,7 @@ class NonSessionTapper {
                 profile_data = await this.api.get_user_data(http_client);
                 await this.api.start_farming(http_client, farm_info_data);
                 logger.info(
-                  `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 🌱 Claimed farm reward | Balance: <la>${profile_data?.data?.available_balance}</la> <gr>(+${claim_farm?.data?.points})</gr> | Play Passes: ${profile_data?.data?.play_passes}`
+                  `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 🌱 Claimed farm reward | Balance: <la>${profile_data?.data?.available_balance} $TOMA Points</la> <gr>(+${claim_farm?.data?.points})</gr> | Play Passes: ${profile_data?.data?.play_passes}`
                 );
               } else {
                 logger.warning(
@@ -468,6 +468,48 @@ class NonSessionTapper {
             logger.warning(
               `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ⚠️ Error while getting farm info: ${farm_info?.message}`
             );
+          }
+        }
+
+        await sleep(3);
+
+        if (settings.AUTO_SPIN) {
+          let get_tickets = await this.api.get_tickets(
+            http_client,
+            tg_web_data
+          );
+
+          if (
+            get_tickets?.status == 0 &&
+            !_.isEmpty(get_tickets?.data) &&
+            get_tickets?.data?.ticket_spin_1
+          ) {
+            while (_.gt(get_tickets?.data?.ticket_spin_1, 0)) {
+              const sleep_spin = _.random(15, 30);
+              logger.info(
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Tickets left to spin: <bl>${get_tickets?.data?.ticket_spin_1}</bl> | Balance: <la>${profile_data?.data?.available_balance} $TOMA Points</la>`
+              );
+              logger.info(
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | sleeping for ${sleep_spin} seconds before spinning...`
+              );
+              await sleep(sleep_spin);
+              const spin = await this.api.spin(http_client);
+              if (spin?.status == 0 && !_.isEmpty(spin?.data?.results)) {
+                for (const item of spin?.data?.results) {
+                  logger.info(
+                    `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Spin reward received: <la>${item?.type} (+${item?.amount})</la>`
+                  );
+                }
+              }
+
+              await sleep(1.25);
+              get_tickets = await this.api.get_tickets(
+                http_client,
+                tg_web_data
+              );
+              await sleep(1.25);
+              profile_data = await this.api.get_user_data(http_client);
+            }
           }
         }
 
@@ -544,7 +586,7 @@ class NonSessionTapper {
             ) {
               profile_data = await this.api.get_user_data(http_client);
               logger.info(
-                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 🎉 Game reward claimed | Balance: <la>${profile_data?.data?.available_balance}</la> (<gr>+${claim_game_reward_response?.data?.points}</gr>) | Available: Play Passes <ye>${profile_data?.data?.play_passes}</ye>`
+                `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 🎉 Game reward claimed | Balance: <la>${profile_data?.data?.available_balance} $TOMA Points</la> (<gr>+${claim_game_reward_response?.data?.points}</gr>) | Available: Play Passes <ye>${profile_data?.data?.play_passes}</ye>`
               );
             } else {
               logger.error(

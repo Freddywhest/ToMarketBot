@@ -18,6 +18,10 @@ const settings = {
     ? process.env.AUTO_TASKS.toLowerCase() === "true"
     : true,
 
+  AUTO_SPIN: process.env.AUTO_SPIN
+    ? process.env.AUTO_SPIN.toLowerCase() === "true"
+    : true,
+
   AUTO_CLAIM_DAILY_REWARD: process.env.AUTO_CLAIM_DAILY_REWARD
     ? process.env.AUTO_CLAIM_DAILY_REWARD.toLowerCase() === "true"
     : true,
