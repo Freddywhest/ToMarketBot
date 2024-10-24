@@ -60,6 +60,10 @@ const settings = {
     ? process.env.USE_PROXY_FROM_JS_FILE.toLowerCase() === "true"
     : false,
 
+  AUTO_COMPLETE_EMOJI_TASK: process.env.AUTO_COMPLETE_EMOJI_TASK
+    ? process.env.AUTO_COMPLETE_EMOJI_TASK.toLowerCase() === "true"
+    : true,
+
   CAN_CREATE_SESSION: false,
 };
 

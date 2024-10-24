@@ -387,6 +387,90 @@ class ApiRequest {
       return null;
     }
   }
+
+  async get_emoji_task(http_client, data) {
+    try {
+      const response = await http_client.post(
+        `${app.apiUrl}/tomarket-game/v1/tasks/list`,
+        JSON.stringify(data)
+      );
+      return response?.data?.data?.emoji;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        logger.warning(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>getting emoji task:</b> ${error?.response?.data?.message}`
+        );
+      } else {
+        logger.error(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>getting emoji task:</b> ${error.message}`
+        );
+      }
+      return null;
+    }
+  }
+
+  async start_emoji_task(http_client, data) {
+    try {
+      const response = await http_client.post(
+        `${app.apiUrl}/tomarket-game/v1/tasks/start`,
+        JSON.stringify(data)
+      );
+      return response?.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        logger.warning(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>starting emoji task:</b> ${error?.response?.data?.message}`
+        );
+      } else {
+        logger.error(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>starting emoji task:</b> ${error.message}`
+        );
+      }
+      return null;
+    }
+  }
+
+  async check_emoji_task(http_client, data) {
+    try {
+      const response = await http_client.post(
+        `${app.apiUrl}/tomarket-game/v1/tasks/check`,
+        JSON.stringify(data)
+      );
+      return response?.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        logger.warning(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>checking emoji task:</b> ${error?.response?.data?.message}`
+        );
+      } else {
+        logger.error(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>checking emoji task:</b> ${error.message}`
+        );
+      }
+      return null;
+    }
+  }
+
+  async claim_emoji_task(http_client, data) {
+    try {
+      const response = await http_client.post(
+        `${app.apiUrl}/tomarket-game/v1/tasks/claim`,
+        JSON.stringify(data)
+      );
+      return response?.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        logger.warning(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>claiming emoji task:</b> ${error?.response?.data?.message}`
+        );
+      } else {
+        logger.error(
+          `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Error while <b>claiming emoji task:</b> ${error.message}`
+        );
+      }
+      return null;
+    }
+  }
 }
 
 module.exports = ApiRequest;
