@@ -37,6 +37,8 @@
 | **USE_PROXY_FROM_JS_FILE**     | Whether to use proxy from the `bot/config/proxies.js` file (True / False)  |
 | **USE_PROXY_FROM_TXT_FILE**    | Whether to use proxy from the `bot/config/proxies.txt` file (True / False) |
 
+### More configurations [Click Here](/README-UPDATE.md)
+
 ## Installation
 
 You can download [**Repository**](https://github.com/FreddyWhest/ToMarketBot) by cloning it to your system and installing the necessary dependencies:

