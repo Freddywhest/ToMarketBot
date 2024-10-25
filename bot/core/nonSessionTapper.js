@@ -394,11 +394,11 @@ class NonSessionTapper {
                 logger.info(
                   `<ye>[${this.bot_name}]</ye> | ${this.session_name} | 🎉 Claimed stars | Stars: <gr>+${start_stars_claim?.data?.stars}</gr>`
                 );
-              } else {
+              } /*  else {
                 logger.warning(
                   `<ye>[${this.bot_name}]</ye> | ${this.session_name} | ⚠️ Error while claiming stars: ${claim_stars?.message} || ${start_stars_claim?.message}`
                 );
-              }
+              } */
             }
           }
 

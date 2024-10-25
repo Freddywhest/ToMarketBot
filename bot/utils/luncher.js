@@ -359,7 +359,7 @@ class Luncher {
       }
       const limit = pLimit(settings.MAX_CONCURRENT_ACCOUNT); // Limit to 2 concurrent executions
       const tasks = queries?.map(async ([query_name, query_id], index) => {
-        limit(async () => {
+        return limit(async () => {
           const proxy = proxiesCycle ? proxiesCycle.next().value : null;
           try {
             const sleeping = _.random(
@@ -370,7 +370,7 @@ class Luncher {
               `<ye>[toMarket]</ye> | ${query_name} | Sleeping ${sleeping} seconds before starting the bot`
             );
             await sleep(sleeping);
-            new NonSessionTapper(query_id, query_name).run(proxy);
+            await new NonSessionTapper(query_id, query_name).run(proxy);
           } catch (error) {
             logger.error(`Error in task for query_id: ${error.message}`);
           }
@@ -405,7 +405,7 @@ class Luncher {
             `<ye>[toMarket]</ye> | ${query_name} | Sleeping ${sleeping} seconds before starting the bot`
           );
           await sleep(sleeping);
-          new NonSessionTapper(query_id, query_name).run(proxy);
+          await new NonSessionTapper(query_id, query_name).run(proxy);
         } catch (error) {
           logger.error(`Error in task for query_id: ${error.message}`);
         }
